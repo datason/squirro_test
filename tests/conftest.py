@@ -11,7 +11,7 @@ from app.dependencies import get_es_client
 # Use environment variable or default to 'elasticsearch' (Docker service name)
 TEST_ES_HOST = os.getenv('ELASTICSEARCH_HOST', 'elasticsearch')
 TEST_ES_PORT = int(os.getenv('ELASTICSEARCH_PORT', '9200'))
-TEST_INDEX = "test_documents"
+TEST_INDEX = "documents"
 
 def wait_for_elasticsearch():
     """Wait for Elasticsearch to be ready"""
@@ -70,8 +70,28 @@ def test_client(es_client: Elasticsearch) -> TestClient:
     """
     def get_test_es_client():
         return es_client
-    
+        
+    # Override the get_es_client dependency
     app.dependency_overrides[get_es_client] = get_test_es_client
+    
+    # Make sure we're using the test index
+    from app.main import startup_event
+    async def test_startup():
+        client = get_test_es_client()
+        if not client.indices.exists(index=TEST_INDEX):
+            client.indices.create(
+                index=TEST_INDEX,
+                body={
+                    "mappings": {
+                        "properties": {
+                            "_id": {"type": "keyword"},
+                            "text": {"type": "text"}
+                        }
+                    }
+                }
+            )
+    
+    app.dependency_overrides["startup_event"] = test_startup
     return TestClient(app)
 
 @pytest.fixture
@@ -99,7 +119,7 @@ def populated_es(es_client: Elasticsearch, sample_documents: list) -> Generator[
     # Clear any existing documents
     if es_client.indices.exists(index=TEST_INDEX):
         es_client.indices.delete(index=TEST_INDEX)
-    
+        
     es_client.indices.create(
         index=TEST_INDEX,
         body={

@@ -191,6 +191,9 @@ erDiagram
    MAX_SEARCH_RESULTS=10
    EOL
 
+   # Build 
+   docker-compose build --no-cache
+
    # Start the services
    docker-compose up -d
    ```
@@ -260,31 +263,18 @@ Response:
 ### Run Tests
 ```bash
 # Run all tests
-pytest
-
-# Run specific test file
-pytest tests/test_routes.py
-
-# Run with coverage report
-pytest --cov=app tests/
+docker-compose run test
 ```
 
 ### Test Coverage
 - API endpoint tests
 - Document creation and retrieval
 - Search functionality
+- LLM-powered search
 - Error handling
 - Edge cases
 
-### Load Testing
-```bash
-# Using k6 (if installed)
-k6 run load_tests/search_performance.js
-```
-
-## Development
-
-### Project Structure
+## Project Structure
 ```
 document_search/
 ├── app/
@@ -306,20 +296,6 @@ document_search/
 └── requirements.txt
 ```
 
-### Local Development
-```bash
-# Create virtual environment
-python -m venv venv
-source venv/bin/activate  # Linux/Mac
-venv\Scripts\activate     # Windows
-
-# Install dependencies
-pip install -r requirements.txt
-
-# Run with hot reload
-uvicorn app.main:app --reload
-```
-
 ## Contributing
 
 1. Fork the repository
@@ -327,7 +303,3 @@ uvicorn app.main:app --reload
 3. Commit your changes
 4. Push to the branch
 5. Create a Pull Request
-
-## License
-
-This project is licensed under the MIT License - see the LICENSE file for details.

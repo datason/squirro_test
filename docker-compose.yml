@@ -1,5 +1,4 @@
 version: '3.8'
-
 services:
   web:
     build: .
@@ -10,9 +9,16 @@ services:
       - ELASTICSEARCH_PORT=9200
       - OPENAI_API_KEY=${OPENAI_API_KEY}
     depends_on:
-      - elasticsearch
+      elasticsearch:
+        condition: service_healthy
     networks:
       - app-network
+    healthcheck:
+      test: curl --fail http://localhost:8000/health || exit 1
+      interval: 30s      
+      timeout: 10s       
+      retries: 5         
+      start_period: 60s  
 
   elasticsearch:
     image: docker.elastic.co/elasticsearch/elasticsearch:7.14.0
@@ -27,10 +33,11 @@ services:
     networks:
       - app-network
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:9200"]
+      test: curl --fail http://localhost:9200 || exit 1
       interval: 10s
       timeout: 5s
       retries: 5
+      start_period: 40s
 
   test:
     build: .
@@ -40,7 +47,10 @@ services:
       - ELASTICSEARCH_PORT=9200
       - OPENAI_API_KEY=${OPENAI_API_KEY}
     depends_on:
-      - elasticsearch
+      elasticsearch:
+        condition: service_healthy
+      web:
+        condition: service_healthy
     networks:
       - app-network
 

@@ -3,7 +3,14 @@ from .api.routes import router
 from elasticsearch import Elasticsearch
 from .dependencies import get_es_client
 
+
+INDEX_NAME = 'documents'
+
 app = FastAPI(title="Document Search Service")
+
+@app.get("/health")
+async def health_check():
+    return {"status": "healthy"}
 
 @app.on_event("startup")
 async def startup_event():
@@ -11,11 +18,10 @@ async def startup_event():
     # Create index if it doesn't exist
     if not es_client.indices.exists(index="documents"):
         es_client.indices.create(
-            index="documents",
+            index=INDEX_NAME,
             body={
                 "mappings": {
                     "properties": {
-                        "_id": {"type": "keyword"},
                         "text": {"type": "text"}
                     }
                 }
